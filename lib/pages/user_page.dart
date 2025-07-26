@@ -236,59 +236,64 @@ class _UserPageState extends State<UserPage> {
                     Expanded(
                       child: LayoutBuilder(
                         builder: (context, constraints) {
-                          return SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                minWidth: constraints.maxWidth,
-                              ),
-                              child: DataTable(
-                                columnSpacing: 32,
-                                columns: [
-                                  DataColumn(label: Text('ID')),
-                                  DataColumn(label: Text('이름')),
-                                  DataColumn(label: Text('번호')),
-                                  DataColumn(label: Text('계정 정지 여부')),
-                                  DataColumn(label: Text('계정 차단 여부')),
-                                ],
-                                rows: visibleUsers.map((user) {
-                                  final int userId = user['user_id'] as int;
-                                  final bool suspension =
-                                      user['suspension_status'] ?? false;
-                                  final bool block =
-                                      user['block_status'] ?? false;
-                                  return DataRow(
-                                    cells: [
-                                      DataCell(Text(userId.toString())),
-                                      DataCell(Text(user['name'] ?? '')),
-                                      DataCell(Text(user['cellphone'] ?? '')),
-                                      DataCell(
-                                        Switch(
-                                          value: suspension,
-                                          onChanged: (_) {
-                                            _onSwitchChange(
-                                              userId: userId,
-                                              field: 'suspension_status',
-                                              prevValue: suspension,
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                      DataCell(
-                                        Switch(
-                                          value: block,
-                                          onChanged: (_) {
-                                            _onSwitchChange(
-                                              userId: userId,
-                                              field: 'block_status',
-                                              prevValue: block,
-                                            );
-                                          },
-                                        ),
-                                      ),
+                          return Scrollbar(
+                            thumbVisibility: true,
+                            child: SingleChildScrollView(
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    minWidth: constraints.maxWidth,
+                                  ),
+                                  child: DataTable(
+                                    columnSpacing: 32,
+                                    columns: [
+                                      DataColumn(label: Text('ID')),
+                                      DataColumn(label: Text('이름')),
+                                      DataColumn(label: Text('번호')),
+                                      DataColumn(label: Text('계정 정지 여부')),
+                                      DataColumn(label: Text('계정 차단 여부')),
                                     ],
-                                  );
-                                }).toList(),
+                                    rows: visibleUsers.map((user) {
+                                      final int userId = user['user_id'] as int;
+                                      final bool suspension =
+                                          user['suspension_status'] ?? false;
+                                      final bool block =
+                                          user['block_status'] ?? false;
+                                      return DataRow(
+                                        cells: [
+                                          DataCell(Text(userId.toString())),
+                                          DataCell(Text(user['name'] ?? '')),
+                                          DataCell(Text(user['cellphone'] ?? '')),
+                                          DataCell(
+                                            Switch(
+                                              value: suspension,
+                                              onChanged: (_) {
+                                                _onSwitchChange(
+                                                  userId: userId,
+                                                  field: 'suspension_status',
+                                                  prevValue: suspension,
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                          DataCell(
+                                            Switch(
+                                              value: block,
+                                              onChanged: (_) {
+                                                _onSwitchChange(
+                                                  userId: userId,
+                                                  field: 'block_status',
+                                                  prevValue: block,
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
                               ),
                             ),
                           );
