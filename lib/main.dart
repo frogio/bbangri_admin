@@ -1,6 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(fileName: ".env");
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+    authOptions: const FlutterAuthClientOptions(
+      authFlowType: AuthFlowType.pkce,
+    ),
+  );
+
   runApp(App());
 }
 
@@ -63,23 +76,46 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _idController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _idController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _login() {
+  void _login() async {
     if (_formKey.currentState!.validate()) {
-      // TODO: Implement login functionality
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Processing login...')));
+      final inputId = _idController.text.trim();
+      final inputPw = _passwordController.text.trim();
+
+      try {
+        final data = await Supabase.instance.client
+            .from('admin_info')
+            .select()
+            .eq('id', inputId)
+            .eq('pw', inputPw)
+            .maybeSingle();
+
+        if (data != null) {
+          // Login successful
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('로그인 성공!')));
+        } else {
+          // Login failed
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('아이디 또는 비밀번호가 일치하지 않습니다.')));
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('로그인 중 오류 발생: $e')));
+      }
     }
   }
 
@@ -108,12 +144,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    // Email field
+                    // ID field
                     SizedBox(
-                      width: 400, // 최대 400px
+                      width: 400,
                       child: TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
+                        controller: _idController,
+                        keyboardType: TextInputType.text,
                         decoration: InputDecoration(
                           labelText: '아이디',
                           prefixIcon: Icon(Icons.email),
@@ -133,7 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     // Password field
                     SizedBox(
-                      width: 400, // 최대 400px
+                      width: 400,
                       child: TextFormField(
                         controller: _passwordController,
                         obscureText: !_isPasswordVisible,
