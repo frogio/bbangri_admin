@@ -11,7 +11,7 @@ class App extends ConsumerWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Bbanggree',
+      title: '빵그리',
       theme: ThemeData(
         primarySwatch: MaterialColor(0xFFD5A87F, {
           50: Color(0xFFF9F4F0),
