@@ -35,6 +35,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
         if (data != null) {
           ref.read(authProvider.notifier).state = true;
+          ref.read(adminIdProvider.notifier).state = data['admin_id'] as int;
         } else {
           ScaffoldMessenger.of(
             context,
