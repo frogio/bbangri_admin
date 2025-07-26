@@ -102,11 +102,11 @@ class _UserPageState extends State<UserPage> {
                             Navigator.of(context).pop();
                             onConfirm();
                           },
-                          child: Text('확인'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color(0xFFD5A87F),
                             foregroundColor: Colors.white,
                           ),
+                          child: Text('확인'),
                         ),
                       ),
                       SizedBox(height: 8),
@@ -169,8 +169,8 @@ class _UserPageState extends State<UserPage> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
+                        isDense: true,
                         contentPadding: EdgeInsets.symmetric(
-                          vertical: 0,
                           horizontal: 12,
                         ),
                       ),
