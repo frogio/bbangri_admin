@@ -248,7 +248,7 @@ class _UserPageState extends State<UserPage> {
                                   child: DataTable(
                                     columnSpacing: 32,
                                     columns: [
-                                      DataColumn(label: Text('ID')),
+                                      DataColumn(label: Text('No')),
                                       DataColumn(label: Text('이름')),
                                       DataColumn(label: Text('번호')),
                                       DataColumn(label: Text('계정 정지 여부')),
