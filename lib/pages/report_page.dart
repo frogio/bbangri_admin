@@ -11,11 +11,18 @@ enum ReportTab { reason, history }
 class _ReportPageState extends State<ReportPage> {
   ReportTab _selectedTab = ReportTab.reason;
   late Future<List<Map<String, dynamic>>> _futureCategories;
+  late Future<List<Map<String, dynamic>>> _futureReports;
+
+  String _searchKeyword = '';
+  int _rowsPerPage = 10;
+  int _currentPage = 1;
+  final _rowsPerPageOptions = [10, 20, 50, 100];
 
   @override
   void initState() {
     super.initState();
     _futureCategories = fetchReportCategories();
+    _futureReports = fetchReportHistory(); // 신고 내역도 같이 초기화
   }
 
   Future<List<Map<String, dynamic>>> fetchReportCategories() async {
@@ -26,7 +33,38 @@ class _ReportPageState extends State<ReportPage> {
     return List<Map<String, dynamic>>.from(data);
   }
 
-  void _showDeleteDialog(int reportReasonId) {
+  Future<List<Map<String, dynamic>>> fetchReportHistory() async {
+    final data = await Supabase.instance.client.from('report').select('''
+        report_id,
+        bread_req (
+          req_id,
+          is_hidden,
+          unique_id,
+          profiles (
+            name,
+            cellphone
+          )
+        ),
+        report_category (
+          reason
+        )
+      ''');
+    return List<Map<String, dynamic>>.from(data);
+  }
+
+  void _onRowsPerPageChanged(int? value) {
+    if (value == null) return;
+    setState(() {
+      _rowsPerPage = value;
+      _currentPage = 1; // 개수 바꾸면 1페이지로
+    });
+  }
+
+  void _onPageChanged(int page) {
+    setState(() => _currentPage = page);
+  }
+
+  void _showDeleteDialog(int isReportCategory, int reportId) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -71,13 +109,24 @@ class _ReportPageState extends State<ReportPage> {
                             Navigator.of(context).pop();
                             // 실제 삭제 진행
                             try {
-                              await Supabase.instance.client
-                                  .from('report_category')
-                                  .delete()
-                                  .eq('report_reason', reportReasonId);
-                              setState(() {
-                                _futureCategories = fetchReportCategories();
-                              });
+                              if (isReportCategory == 1) {
+                                await Supabase.instance.client
+                                    .from('report_category')
+                                    .delete()
+                                    .eq('report_reason', reportId);
+                                setState(() {
+                                  _futureCategories = fetchReportCategories();
+                                });
+                              }
+                              else {
+                                await Supabase.instance.client
+                                    .from('report')
+                                    .delete()
+                                    .eq('report_id', reportId);
+                                setState(() {
+                                  _futureReports = fetchReportHistory();
+                                });
+                              }
                             } catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text('삭제 실패: $e')),
@@ -236,24 +285,44 @@ void _showAddReasonDialog() {
                   child: Text('추가하기', style: TextStyle(fontSize: 16)),
                 )
               else
-                SizedBox(
-                  width: 320,
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: '검색 (이름 또는 번호를 입력해주세요.)',
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 320,
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: '검색 (이름 또는 번호를 입력해주세요.)',
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _searchKeyword = value.trim();
+                            _currentPage = 1; // 검색할 때 1페이지로
+                          });
+                        },
                       ),
                     ),
-                    onChanged: (value) {
-                      // TODO: 검색어 상태 저장 및 리스트 필터링
-                    },
-                  ),
+                    SizedBox(width: 16),
+                    DropdownButton<int>(
+                      value: _rowsPerPage,
+                      items: _rowsPerPageOptions
+                          .map(
+                            (count) => DropdownMenuItem(
+                              value: count,
+                              child: Text('$count개씩'),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: _onRowsPerPageChanged,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ],
                 ),
             ],
           ),
@@ -334,6 +403,7 @@ void _showAddReasonDialog() {
                                       ElevatedButton(
                                         onPressed: () {
                                           _showDeleteDialog(
+                                            1, // 1은 신고 사유 삭제
                                             cat['report_reason'],
                                           );
                                         },
@@ -366,8 +436,210 @@ void _showAddReasonDialog() {
                   );
                 },
               ),
+            )
+          else if (_selectedTab == ReportTab.history)
+            Expanded(
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: _futureReports,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text('데이터 불러오기 오류: ${snapshot.error}'),
+                    );
+                  }
+                  final reports = snapshot.data ?? [];
+                  if (reports.isEmpty) {
+                    return Center(child: Text('신고 내역이 없습니다.'));
+                  }
+                  final filteredReports = _searchKeyword.isEmpty
+                      ? reports
+                      : reports.where((report) {
+                          final breadReq = report['bread_req'] ?? {};
+                          final profile = breadReq['profiles'] ?? {};
+                          final name = (profile['name'] ?? '')
+                              .toString()
+                              .toLowerCase();
+                          final phone = (profile['cellphone'] ?? '').toString();
+                          final keyword = _searchKeyword.toLowerCase();
+                          return name.contains(keyword) ||
+                              phone.contains(_searchKeyword);
+                        }).toList();
+
+                  // 페이지네이션 로직
+                  final total = filteredReports.length;
+                  final totalPages = (total / _rowsPerPage).ceil().clamp(1, 999);
+                  final startIdx = (_currentPage - 1) * _rowsPerPage;
+                  final endIdx = (startIdx + _rowsPerPage).clamp(0, total);
+                  final visibleReports = filteredReports.sublist(startIdx, endIdx);
+
+                  if (visibleReports.isEmpty) {
+                    return Center(child: Text('검색 결과가 없습니다.'));
+                  }
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            return SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minWidth: constraints.maxWidth,
+                                ),
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.vertical,
+                                  child: DataTable(
+                                    columnSpacing: 24,
+                                    columns: [
+                                      DataColumn(label: Text('신고 ID')),
+                                      DataColumn(label: Text('신고자 이름')),
+                                      DataColumn(label: Text('전화번호')),
+                                      DataColumn(label: Text('신고 사유')),
+                                      DataColumn(label: Text('작성글 숨김')),
+                                      DataColumn(label: Text('작성글 삭제')),
+                                    ],
+                                    rows: visibleReports.map((row) {
+                                      final breadReq = row['bread_req'] ?? {};
+                                      final profile = breadReq['profiles'] ?? {};
+                                      final reportCategory =
+                                          row['report_category'] ?? {};
+                                      final hidden = breadReq['is_hidden'] ?? false;
+                                      return DataRow(
+                                        cells: [
+                                          DataCell(Text(row['report_id'].toString())),
+                                          DataCell(Text(profile['name'] ?? '')),
+                                          DataCell(Text(profile['cellphone'] ?? '')),
+                                          DataCell(
+                                            Text(reportCategory['reason'] ?? ''),
+                                          ),
+                                          DataCell(
+                                            Switch(
+                                              value: breadReq['is_hidden'] ?? false,
+                                              onChanged: (bool value) async {
+                                                try {
+                                                  await Supabase.instance.client
+                                                      .from('bread_req')
+                                                      .update({'is_hidden': value})
+                                                      .eq(
+                                                        'req_id',
+                                                        breadReq['req_id'],
+                                                      );
+                                                  setState(() {
+                                                    _futureReports =
+                                                        fetchReportHistory();
+                                                  });
+                                                } catch (e) {
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        '숨김 상태 변경 실패: $e',
+                                                      ),
+                                                    ),
+                                                  );
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                          DataCell(
+                                            ElevatedButton(
+                                              onPressed: () {
+                                                _showDeleteDialog(
+                                                  0, // 0은 신고 내역 삭제
+                                                  row['report_id'],
+                                                );
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                    Colors.grey[300],
+                                                foregroundColor: Colors.black,
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: 12,
+                                                ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(5),
+                                                ),
+                                              ),
+                                              child: Text(
+                                                '삭제하기',
+                                                style: TextStyle(fontSize: 16),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      // 페이지네이션 버튼
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.chevron_left),
+                            onPressed: _currentPage > 1
+                                ? () => _onPageChanged(_currentPage - 1)
+                                : null,
+                          ),
+                          for (int i = 1; i <= totalPages; i++)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 2,
+                              ),
+                              child: OutlinedButton(
+                                onPressed: _currentPage == i
+                                    ? null
+                                    : () => _onPageChanged(i),
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: _currentPage == i
+                                      ? Color(0xFFD5A87F).withOpacity(0.12)
+                                      : Colors.transparent,
+                                  side: BorderSide(
+                                    color: _currentPage == i
+                                        ? Color(0xFFD5A87F)
+                                        : Colors.grey.shade400,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 0,
+                                  ),
+                                ),
+                                child: Text(
+                                  '$i',
+                                  style: TextStyle(
+                                    color: _currentPage == i
+                                        ? Color(0xFFD5A87F)
+                                        : Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          IconButton(
+                            icon: Icon(Icons.chevron_right),
+                            onPressed: _currentPage < totalPages
+                                ? () => _onPageChanged(_currentPage + 1)
+                                : null,
+                          ),
+                        ],
+                      ),
+                    ]
+                  );
+                },
+              ),
             ),
-          // TODO: 신고 내역 관리 탭 구현
         ],
       ),
     );
