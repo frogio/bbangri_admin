@@ -506,7 +506,6 @@ void _showAddReasonDialog() {
                                       final profile = breadReq['profiles'] ?? {};
                                       final reportCategory =
                                           row['report_category'] ?? {};
-                                      final hidden = breadReq['is_hidden'] ?? false;
                                       return DataRow(
                                         cells: [
                                           DataCell(Text(row['report_id'].toString())),
