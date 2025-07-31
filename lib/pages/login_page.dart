@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'password_reset.dart';
 import '../providers/auth_provider.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -135,6 +136,25 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                   ),
                   child: Text('로그인', style: TextStyle(fontSize: 16)),
+                ),
+                SizedBox(height: 24),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => PasswordResetPage(), // import 필요
+                      ),
+                    );
+                  },
+                  child: Text(
+                    '비밀번호 찾기',
+                    style: TextStyle(
+                      color: Color(0xFFD5A87F),
+                      fontSize: 15,
+                      decoration: TextDecoration.underline,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
               ],
             ),
