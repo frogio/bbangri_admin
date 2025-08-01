@@ -118,12 +118,6 @@ class _NoticePageState extends State<NoticePage> {
     }
   }
 
-  void _goToEditNotice(BuildContext context, Map<String, dynamic> notice) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => NoticeEditPage(notificationId: notice['notification_id'])));
-  }
-
   void _showAddNoticeDialog() {
     final _titleController = TextEditingController();
     final _detailController = TextEditingController();

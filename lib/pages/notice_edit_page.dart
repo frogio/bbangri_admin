@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
-import 'admin_layout.dart';
 
 class NoticeEditPage extends StatefulWidget {
   final int notificationId;
