@@ -155,7 +155,6 @@ class _PostPageState extends State<PostPage> {
       // 이미지 decode 실패
     }
 
-    final supabaseUrl = dotenv.env['SUPABASE_URL'];
     int _currentIndex = 0;
 
     showDialog(
@@ -228,8 +227,7 @@ class _PostPageState extends State<PostPage> {
                             },
                           ),
                           items: imageList.map<Widget>((imgPath) {
-                            final imageUrl =
-                                '$supabaseUrl/storage/v1/object/public/breadreq/$imgPath';
+                            final imageUrl = Supabase.instance.client.storage.from('breadreq').getPublicUrl(imgPath).toString();
                             return Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 3,
