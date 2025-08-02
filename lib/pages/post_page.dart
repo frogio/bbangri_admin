@@ -86,55 +86,63 @@ class _PostPageState extends State<PostPage> {
       builder: (context) {
         return Dialog(
           insetPadding: EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Spacer(),
-                    IconButton(
-                      icon: Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 6),
-                Text(
-                  '삭제하시겠습니까?',
-                  style: TextStyle(fontSize: 16),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      Navigator.of(context).pop();
-                      try {
-                        await Supabase.instance.client
-                            .from('today_bread')
-                            .delete()
-                            .eq('store_id', storeId);
-                        setState(() {
-                          _futureTodayBread = fetchTodayBread();
-                        });
-                      } catch (e) {
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text('삭제 실패: $e')));
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFD5A87F),
-                      foregroundColor: Colors.white,
-                    ),
-                    child: Text('확인'),
+          child: IntrinsicWidth(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                top: 16,
+                left: 24,
+                right: 24,
+                bottom: 8,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Spacer(),
+                      IconButton(
+                        icon: Icon(Icons.close),
+                        splashRadius: 18,
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
                   ),
-                ),
-                SizedBox(height: 8),
-              ],
+                  SizedBox(height: 6),
+                  Text(
+                    '삭제하시겠습니까?',
+                    style: TextStyle(fontSize: 16),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                        try {
+                          await Supabase.instance.client
+                              .from('today_bread')
+                              .delete()
+                              .eq('store_id', storeId);
+                          setState(() {
+                            _futureTodayBread = fetchTodayBread();
+                          });
+                        } catch (e) {
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text('삭제 실패: $e')));
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFFD5A87F),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: Text('확인'),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                ],
+              ),
             ),
           ),
         );
