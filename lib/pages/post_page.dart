@@ -207,136 +207,170 @@ class _PostPageState extends State<PostPage> {
                 constraints: BoxConstraints(
                   minWidth: 440,
                   maxWidth: 1000,
-                  maxHeight: MediaQuery.of(context).size.height * 0.6,
+                  maxHeight: MediaQuery.of(context).size.height * 0.85,
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(28.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Spacer(),
-                          IconButton(
-                            icon: Icon(Icons.close),
-                            onPressed: () => Navigator.of(context).pop(),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        // ✅ 다이얼로그 전체가 작아졌을 때 스크롤되게 함
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
                           ),
-                        ],
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        row['request_name'] ?? '',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Text(
-                            '작성자: ${profile['name'] ?? ''}',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.grey[800],
-                            ),
-                          ),
-                          SizedBox(width: 18),
-                          Text(
-                            '작성일: ${formatDate(row['req_time'])}',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 18),
-                      if (imageList.isNotEmpty) ...[
-                        CarouselSlider(
-                          options: CarouselOptions(
-                            height: 180,
-                            viewportFraction: 0.32, // 한 화면에 3개 정도 보이게 (조절 가능)
-                            enableInfiniteScroll: false,
-                            enlargeCenterPage: false,
-                            onPageChanged: (idx, reason) {
-                              setState(() {
-                                _currentIndex = idx;
-                              });
-                            },
-                          ),
-                          items: imageList.map<Widget>((imgPath) {
-                            final imageUrl = Supabase.instance.client.storage.from('breadreq').getPublicUrl(imgPath).toString();
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 3,
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  imageUrl,
-                                  fit: BoxFit.cover,
-                                  width: 400,
-                                  height: 400,
-                                  errorBuilder: (c, e, s) => Container(
-                                    width: 400,
-                                    height: 400,
-                                    color: Colors.grey[300],
-                                    child: Icon(Icons.broken_image, size: 40),
+                          child: IntrinsicHeight(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Spacer(),
+                                    IconButton(
+                                      icon: Icon(Icons.close),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 10),
+                                Text(
+                                  row['request_name'] ?? '',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                        SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(imageList.length, (idx) {
-                            return Container(
-                              width: 9,
-                              height: 9,
-                              margin: EdgeInsets.symmetric(horizontal: 3),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: _currentIndex == idx
-                                    ? Theme.of(context).primaryColor
-                                    : Colors.grey[400],
-                              ),
-                            );
-                          }),
-                        ),
-                      ],
-                      if (imageList.isNotEmpty) SizedBox(height: 16),
-                      Text(
-                        '내용',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      SizedBox(height: 6),
-                      Expanded(
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey.shade300),
-                          ),
-                          padding: EdgeInsets.all(12),
-                          child: SingleChildScrollView(
-                            child: Text(
-                              row['detail_msg'] ?? '',
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: Colors.black87,
-                              ),
+                                SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    Text(
+                                      '작성자: ${profile['name'] ?? ''}',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: Colors.grey[800],
+                                      ),
+                                    ),
+                                    SizedBox(width: 18),
+                                    Text(
+                                      '작성일: ${formatDate(row['req_time'])}',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 18),
+                                if (imageList.isNotEmpty) ...[
+                                  CarouselSlider(
+                                    options: CarouselOptions(
+                                      height: 180,
+                                      viewportFraction:
+                                          0.32, // 한 화면에 3개 정도 보이게 (조절 가능)
+                                      enableInfiniteScroll: false,
+                                      enlargeCenterPage: false,
+                                      onPageChanged: (idx, reason) {
+                                        setState(() {
+                                          _currentIndex = idx;
+                                        });
+                                      },
+                                    ),
+                                    items: imageList.map<Widget>((imgPath) {
+                                      final imageUrl = Supabase
+                                          .instance
+                                          .client
+                                          .storage
+                                          .from('breadreq')
+                                          .getPublicUrl(imgPath)
+                                          .toString();
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 3,
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          child: Image.network(
+                                            imageUrl,
+                                            fit: BoxFit.cover,
+                                            width: 400,
+                                            height: 400,
+                                            errorBuilder: (c, e, s) =>
+                                                Container(
+                                                  width: 400,
+                                                  height: 400,
+                                                  color: Colors.grey[300],
+                                                  child: Icon(
+                                                    Icons.broken_image,
+                                                    size: 40,
+                                                  ),
+                                                ),
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                  SizedBox(height: 10),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: List.generate(imageList.length, (
+                                      idx,
+                                    ) {
+                                      return Container(
+                                        width: 9,
+                                        height: 9,
+                                        margin: EdgeInsets.symmetric(
+                                          horizontal: 3,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: _currentIndex == idx
+                                              ? Theme.of(context).primaryColor
+                                              : Colors.grey[400],
+                                        ),
+                                      );
+                                    }),
+                                  ),
+                                ],
+                                if (imageList.isNotEmpty) SizedBox(height: 16),
+                                Text(
+                                  '내용',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                SizedBox(height: 6),
+                                Expanded(
+                                  child: Container(
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[100],
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: Colors.grey.shade300,
+                                      ),
+                                    ),
+                                    padding: EdgeInsets.all(12),
+                                    child: SingleChildScrollView(
+                                      child: Text(
+                                        row['detail_msg'] ?? '',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 ),
               ),
