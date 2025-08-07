@@ -64,7 +64,7 @@ class _ReportPageState extends State<ReportPage> {
     setState(() => _currentPage = page);
   }
 
-  void _showDeleteDialog(int isReportCategory, int reportId) {
+  void _showDeleteDialog(int reportId) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -109,24 +109,13 @@ class _ReportPageState extends State<ReportPage> {
                             Navigator.of(context).pop();
                             // 실제 삭제 진행
                             try {
-                              if (isReportCategory == 1) {
-                                await Supabase.instance.client
-                                    .from('report_category')
-                                    .delete()
-                                    .eq('report_reason', reportId);
-                                setState(() {
-                                  _futureCategories = fetchReportCategories();
-                                });
-                              }
-                              else {
-                                await Supabase.instance.client
-                                    .from('report')
-                                    .delete()
-                                    .eq('report_id', reportId);
-                                setState(() {
-                                  _futureReports = fetchReportHistory();
-                                });
-                              }
+                              await Supabase.instance.client
+                                  .from('report_category')
+                                  .delete()
+                                  .eq('report_reason', reportId);
+                              setState(() {
+                                _futureCategories = fetchReportCategories();
+                              });
                             } catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text('삭제 실패: $e')),
@@ -403,7 +392,6 @@ void _showAddReasonDialog() {
                                       ElevatedButton(
                                         onPressed: () {
                                           _showDeleteDialog(
-                                            1, // 1은 신고 사유 삭제
                                             cat['report_reason'],
                                           );
                                         },
@@ -499,7 +487,6 @@ void _showAddReasonDialog() {
                                       DataColumn(label: Text('전화번호')),
                                       DataColumn(label: Text('신고 사유')),
                                       DataColumn(label: Text('작성글 숨김')),
-                                      DataColumn(label: Text('작성글 삭제')),
                                     ],
                                     rows: visibleReports.map((row) {
                                       final breadReq = row['bread_req'] ?? {};
@@ -542,32 +529,6 @@ void _showAddReasonDialog() {
                                                   );
                                                 }
                                               },
-                                            ),
-                                          ),
-                                          DataCell(
-                                            ElevatedButton(
-                                              onPressed: () {
-                                                _showDeleteDialog(
-                                                  0, // 0은 신고 내역 삭제
-                                                  row['report_id'],
-                                                );
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    Colors.grey[300],
-                                                foregroundColor: Colors.black,
-                                                padding: EdgeInsets.symmetric(
-                                                  horizontal: 12,
-                                                ),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(5),
-                                                ),
-                                              ),
-                                              child: Text(
-                                                '삭제하기',
-                                                style: TextStyle(fontSize: 16),
-                                              ),
                                             ),
                                           ),
                                         ],
